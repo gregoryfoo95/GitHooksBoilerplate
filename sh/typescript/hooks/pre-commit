@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# Get list of staged Typescript/Javascript files
+FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '.*\.(ts|tsx|js|jsx)$')
+
+# Exit if there are no TS/JS files staged
+if [ -z "$FILES"]; then
+    echo "No TS/JS files staged for commit."
+    exit 0
+fi 
+
+## Run various pre-commit logics
+
+# Run ESLint
+npx eslint FILES
+
+# If ESLint fails, do not commit
+if [ $? -ne 0 ]; then
+    echo "ESLint found issues. Commit aborted."
+    exit 1
+fi
+
+echo "ESLint passed."
