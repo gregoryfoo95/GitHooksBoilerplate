@@ -10,6 +10,7 @@ BACKUP_DIR="$(pwd)/.git/hooks-backup-typescript-$TIMESTAMP"
 
 # Backup existing pre-commit hook if it exists
 if [ -f "$GIT_HOOKS_DIR/pre-commit" ]; then
+    echo "Creating BACKUP_DIR..."
     mkdir -p "$BACKUP_DIR"
     mv "$GIT_HOOKS_DIR/pre-commit" "$BACKUP_DIR/pre-commit"
     echo "Existing pre-commit hook has been backed up to $BACKUP_DIR."
