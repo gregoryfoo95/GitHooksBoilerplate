@@ -11,7 +11,15 @@ fi
 
 ## Run various pre-commit logics
 
-# Run ESLint
+# ========= 1. Run Prettier to format the staged files =========
+echo "Running Prettier on staged TypeScript, JavaScript, and JSX files..."
+npx prettier --write $FILES
+
+# Add the formatted files back to staging
+echo "Adding formatted files back to staging..."
+git add $FILES
+
+# ========= 2. Run ESLint =========
 echo "Running ESLint on staged TypeScript, JavaScript, and JSX files..."
 npx eslint $FILES
 
@@ -22,3 +30,39 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "ESLint passed."
+
+# ========= 3. Check if npm run test is available and run tests if so =========
+if npm run | grep -q "test"; then
+    echo "Running tests..."
+    npm run test
+
+    # If tests fail, do not commit
+    if [ $? -ne 0 ]; then
+        echo "Tests failed. Commit aborted."
+        exit 1
+    fi
+
+    echo "Tests passed."
+else
+    echo "No test script found in package.json. Skipping tests."
+fi
+
+
+# ========= 4. Check if the commit message starts with an allowed type =========
+COMMIT_MSG_FILE=$(git rev-parse --git-dir)/COMMIT_EDITMSG
+COMMIT_MSG=$(head -n 1 $COMMIT_MSG_FILE)
+
+ALLOWED_PATTERN="^(feat|fix|chore|refactor|docs|style|test|perf|ci|build|revert): "
+
+if [[ ! $COMMIT_MSG =~ $ALLOWED_PATTERN ]]; then
+    echo "Error: Commit message does not start with an allowed type."
+    echo "Please start your commit message with one of the following types:"
+    echo "  feat, fix, chore, refactor, docs, style, test, perf, ci, build, revert"
+    exit 1
+fi
+
+# ========= 5. Check if any merge conflict markers are present =========
+if git grep -q "<<<<<<< HEAD"; then
+    echo "Merge conflict markers found. Commit aborted."
+    exit 1
+fi
